@@ -181,20 +181,31 @@
     .review-item {
       padding: 13px 15px;
       border: 1px solid var(--border);
+      border-left-width: 4px;
       border-radius: 11px;
       margin-bottom: 10px;
       background: var(--card);
       animation: riseIn 0.4s ease both;
     }
-    .review-item .rq { font-weight: 600; margin-bottom: 4px; }
+    .review-item.correct { border-left-color: var(--correct); background: var(--correct-soft); }
+    .review-item.incorrect { border-left-color: var(--wrong); background: var(--wrong-soft); }
+    .review-item .rq { font-weight: 600; margin-bottom: 6px; }
     .review-item .ra {
       display: flex;
       align-items: baseline;
       gap: 7px;
-      color: var(--correct);
       font-size: 0.98rem;
+      margin-top: 3px;
     }
     .review-item .ra .tick { flex: 0 0 auto; font-weight: 700; }
+    .review-item .ra.right { color: var(--correct); }
+    .review-item .ra.wrong { color: var(--wrong); }
+    .review-item .rexp {
+      margin-top: 7px;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: var(--muted);
+    }
 
     button.primary {
       padding: 13px 26px;
@@ -232,6 +243,7 @@
       var questions = data.questions || [];
       var current = 0;
       var score = 0;
+      var picks = [];     // the option index each question was answered with
       var locked = false; // prevents double taps / taps mid-transition
 
       // Timings (ms)
@@ -307,6 +319,7 @@
           if (idx === i) b.classList.add("selected", "picked");
           else b.classList.add("dim");
         });
+        picks[current] = i;
         if (i === q.answer) score++;
 
         // After the reveal, animate the card out, then move on.
@@ -379,24 +392,36 @@
         var letters = "ABCDEFGHIJ";
         questions.forEach(function (q, idx) {
           setTimeout(function () {
+            var picked = picks[idx];
+            var isCorrect = picked === q.answer;
+
             var item = document.createElement("div");
-            item.className = "review-item";
+            item.className = "review-item " + (isCorrect ? "correct" : "incorrect");
 
             var rq = document.createElement("div");
             rq.className = "rq";
             rq.textContent = (idx + 1) + ". " + q.question;
             item.appendChild(rq);
 
-            var ra = document.createElement("div");
-            ra.className = "ra";
-            var tick = document.createElement("span");
-            tick.className = "tick";
-            tick.textContent = "✓";
-            var atext = document.createElement("span");
-            atext.textContent = (letters[q.answer] || (q.answer + 1)) + ". " + q.options[q.answer];
-            ra.appendChild(tick);
-            ra.appendChild(atext);
-            item.appendChild(ra);
+            // If they got it wrong, show their answer in red first.
+            if (!isCorrect) {
+              item.appendChild(answerLine("wrong", "✗",
+                (picked == null
+                  ? "No answer"
+                  : (letters[picked] || (picked + 1)) + ". " + q.options[picked])));
+            }
+
+            // Always show the correct answer in green.
+            item.appendChild(answerLine("right", "✓",
+              (letters[q.answer] || (q.answer + 1)) + ". " + q.options[q.answer]));
+
+            // Optional explanation in very small text.
+            if (q.explanation) {
+              var exp = document.createElement("div");
+              exp.className = "rexp";
+              exp.textContent = q.explanation;
+              item.appendChild(exp);
+            }
 
             review.appendChild(item);
             item.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -409,11 +434,24 @@
           again.className = "primary";
           again.textContent = "Play again";
           again.addEventListener("click", function () {
-            current = 0; score = 0; renderQuestion();
+            current = 0; score = 0; picks = []; renderQuestion();
           });
           container.appendChild(again);
           again.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, REVIEW_STEP * (questions.length + 1));
+      }
+
+      function answerLine(kind, symbol, text) {
+        var ra = document.createElement("div");
+        ra.className = "ra " + kind;
+        var tick = document.createElement("span");
+        tick.className = "tick";
+        tick.textContent = symbol;
+        var atext = document.createElement("span");
+        atext.textContent = text;
+        ra.appendChild(tick);
+        ra.appendChild(atext);
+        return ra;
       }
 
       function animateCount(el, finalScore, total) {

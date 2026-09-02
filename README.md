@@ -7,7 +7,9 @@ One question is shown at a time. The player taps an option — the choice is
 acknowledged but **the correct answer is not revealed** — then the card slides
 out and the next question slides in (no "Next" button). At the end a short
 celebration animation plays, the final score counts up, and then every question
-with its correct answer is revealed one by one, a second apart.
+is revealed one by one, a second apart — each tinted green if the player got it
+right or red if not, showing the correct answer (and their answer, if wrong)
+plus any explanation in small text.
 
 Because everything runs on each device independently, any number of people can
 take the quiz at the same time from their own phones — there is no shared state
@@ -37,7 +39,8 @@ Open `questions.js` and edit the `questions` array. Each question looks like:
 {
   question: "The question text",
   options:  ["Option A", "Option B", "Option C", "Option D"],
-  answer:   2                  // 0-based index of the correct option
+  answer:   2,                 // 0-based index of the correct option
+  explanation: "Optional note, shown in small text in the end review"
 }
 ```
 
