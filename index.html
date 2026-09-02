@@ -42,7 +42,7 @@
       margin: 0;
       min-height: 100%;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       padding: 20px 16px;
       background: var(--bg);
@@ -59,7 +59,9 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 26px 22px 30px;
-      overflow: hidden;
+      /* clip horizontal slide overflow only, so a sticky child can still
+         pin to the viewport vertically */
+      overflow-x: clip;
     }
     h1 { margin: 0 0 4px; font-size: 1.35rem; }
     .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
@@ -145,6 +147,17 @@
 
     /* Results screen */
     .results { text-align: center; padding: 12px 0 4px; }
+    /* Sticky score header — stays at the top while scrolling the answers.
+       Full-bleed across the card (negative margins cancel the card padding). */
+    .result-head {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--card);
+      margin: 0 -22px;
+      padding: 8px 22px 12px;
+      box-shadow: 0 10px 12px -10px rgba(20, 26, 45, 0.28);
+    }
     .celebrate {
       font-size: 3.4rem;
       margin: 6px 0 4px;
@@ -250,7 +263,7 @@
       var REVEAL = 450;     // brief pause after a tap before advancing
       var EXIT = 300;       // slide-out duration (matches CSS)
       var CELEBRATE = 900;  // end-screen burst before the score appears
-      var REVIEW_STEP = 1000; // gap between each revealed review item
+      var REVIEW_STEP = 2000; // gap between each revealed review item
 
       var titleEl = document.getElementById("title");
       var subtitleEl = document.getElementById("subtitle");
@@ -367,8 +380,13 @@
           msgEl.className = "msg";
           msgEl.textContent = msg;
 
-          r.appendChild(big);
-          r.appendChild(pctEl);
+          // Score + percentage sit in a sticky header so the total stays
+          // visible at the top while scrolling through the answers.
+          var head = document.createElement("div");
+          head.className = "result-head";
+          head.appendChild(big);
+          head.appendChild(pctEl);
+          r.appendChild(head);
           r.appendChild(msgEl);
 
           // Count the score up for a little flair.
@@ -424,7 +442,6 @@
             }
 
             review.appendChild(item);
-            item.scrollIntoView({ behavior: "smooth", block: "nearest" });
           }, REVIEW_STEP * (idx + 1));
         });
 
@@ -437,7 +454,6 @@
             current = 0; score = 0; picks = []; renderQuestion();
           });
           container.appendChild(again);
-          again.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, REVIEW_STEP * (questions.length + 1));
       }
 
