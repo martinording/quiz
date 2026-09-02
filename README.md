@@ -3,6 +3,15 @@
 A small, dependency-free HTML quiz app. All logic runs in the browser, so it
 works perfectly on **GitHub Pages** (which is static-only — no server-side code).
 
+One question is shown at a time. The player taps an option, the correct/chosen
+answers flash briefly, then the card slides out and the next question slides in
+— no "Next" button. At the end a short celebration animation plays and the
+final score counts up.
+
+Because everything runs on each device independently, any number of people can
+take the quiz at the same time from their own phones — there is no shared state
+or backend to coordinate.
+
 ## Files
 
 - `index.html` — the app (HTML, CSS, and JS in one file)
@@ -27,8 +36,7 @@ Open `questions.js` and edit the `questions` array. Each question looks like:
 {
   question: "The question text",
   options:  ["Option A", "Option B", "Option C", "Option D"],
-  answer:   2,                 // 0-based index of the correct option
-  explanation: "Optional note shown after answering"
+  answer:   2                  // 0-based index of the correct option
 }
 ```
 

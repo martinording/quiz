@@ -5,8 +5,7 @@
  *   {
  *     question: "The question text",
  *     options:  ["Option A", "Option B", "Option C", "Option D"],
- *     answer:   2,            // index (0-based) of the correct option
- *     explanation: "..."      // optional, shown after answering
+ *     answer:   2             // index (0-based) of the correct option
  *   }
  *
  * You can have any number of questions and any number of options per question.

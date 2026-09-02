@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Quiz</title>
   <style>
     :root {
@@ -17,7 +17,7 @@
       --correct-soft: #e7f6ed;
       --wrong: #dc2626;
       --wrong-soft: #fdeaea;
-      --radius: 14px;
+      --radius: 16px;
       --shadow: 0 10px 30px rgba(20, 26, 45, 0.08);
     }
     @media (prefers-color-scheme: dark) {
@@ -36,30 +36,33 @@
         --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       }
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100%;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: center;
-      padding: 32px 16px;
+      padding: 20px 16px;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.5;
+      line-height: 1.4;
+      overflow-x: hidden;
     }
     .app {
       width: 100%;
-      max-width: 640px;
+      max-width: 560px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 28px;
+      padding: 26px 22px 30px;
+      overflow: hidden;
     }
-    h1 { margin: 0 0 4px; font-size: 1.5rem; }
-    .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+    h1 { margin: 0 0 4px; font-size: 1.35rem; }
+    .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
 
     .progress-track {
       height: 8px;
@@ -73,80 +76,118 @@
       width: 0%;
       background: var(--accent);
       border-radius: 999px;
-      transition: width 0.3s ease;
+      transition: width 0.35s ease;
+    }
+
+    /* Stage holds the animating card */
+    .stage { position: relative; }
+
+    .qcard { will-change: transform, opacity; }
+    .qcard.enter { animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .qcard.exit  { animation: slideOut 0.3s cubic-bezier(0.55, 0, 0.68, 0.2) both; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(36px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to   { opacity: 0; transform: translateX(-40px); }
     }
 
     .qcount { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
-    .question { font-size: 1.2rem; font-weight: 600; margin-bottom: 18px; }
+    .question { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; min-height: 2.4em; }
 
-    .options { display: flex; flex-direction: column; gap: 10px; }
+    .options { display: flex; flex-direction: column; gap: 12px; }
     .option {
       display: flex;
       align-items: center;
       gap: 12px;
       width: 100%;
       text-align: left;
-      padding: 14px 16px;
+      padding: 16px 16px;
       border: 1.5px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       background: var(--card);
       color: var(--text);
-      font-size: 1rem;
+      font-size: 1.05rem;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, transform 0.05s;
+      transition: border-color 0.15s, background 0.15s, transform 0.08s;
+      touch-action: manipulation;
     }
-    .option:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
-    .option:active:not(:disabled) { transform: scale(0.995); }
+    .option:active:not(:disabled) { transform: scale(0.98); border-color: var(--accent); background: var(--accent-soft); }
+    @media (hover: hover) {
+      .option:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+    }
     .option:disabled { cursor: default; }
     .option .marker {
-      flex: 0 0 26px;
-      height: 26px;
+      flex: 0 0 28px;
+      height: 28px;
       border-radius: 50%;
       border: 1.5px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: var(--muted);
+      transition: all 0.15s;
     }
     .option.correct { border-color: var(--correct); background: var(--correct-soft); }
-    .option.correct .marker { border-color: var(--correct); color: var(--correct); }
+    .option.correct .marker { border-color: var(--correct); color: #fff; background: var(--correct); }
     .option.wrong { border-color: var(--wrong); background: var(--wrong-soft); }
-    .option.wrong .marker { border-color: var(--wrong); color: var(--wrong); }
-
-    .explanation {
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 10px;
-      background: var(--accent-soft);
-      color: var(--text);
-      font-size: 0.95rem;
-      display: none;
+    .option.wrong .marker { border-color: var(--wrong); color: #fff; background: var(--wrong); }
+    .option.picked { animation: pop 0.28s ease; }
+    .option.dim { opacity: 0.5; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.03); }
+      100% { transform: scale(1); }
     }
-    .explanation.show { display: block; }
-    .explanation strong { color: var(--accent); }
-
-    .footer { margin-top: 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .score { color: var(--muted); font-size: 0.9rem; }
-    button.primary {
-      padding: 11px 22px;
-      border: none;
-      border-radius: 10px;
-      background: var(--accent);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
-    button.primary:hover:not(:disabled) { opacity: 0.9; }
 
     /* Results screen */
-    .results { text-align: center; padding: 10px 0; }
-    .results .big { font-size: 3rem; font-weight: 800; color: var(--accent); margin: 8px 0; }
-    .results p { color: var(--muted); margin: 4px 0 20px; }
+    .results { text-align: center; padding: 12px 0 4px; }
+    .celebrate {
+      font-size: 3.4rem;
+      margin: 6px 0 4px;
+      animation: burst 0.7s cubic-bezier(0.18, 1.4, 0.4, 1) both;
+    }
+    @keyframes burst {
+      0% { transform: scale(0.2) rotate(-20deg); opacity: 0; }
+      60% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .results .big {
+      font-size: 3.2rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 8px 0 2px;
+      animation: riseIn 0.5s ease 0.15s both;
+    }
+    .results .pct { color: var(--muted); font-size: 1.05rem; margin: 0 0 6px; animation: riseIn 0.5s ease 0.25s both; }
+    .results .msg { color: var(--text); font-size: 1.05rem; margin: 0 0 22px; animation: riseIn 0.5s ease 0.35s both; }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    button.primary {
+      padding: 13px 26px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.02rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.08s;
+      animation: riseIn 0.5s ease 0.5s both;
+      touch-action: manipulation;
+    }
+    button.primary:active { transform: scale(0.97); }
+    button.primary:hover { opacity: 0.9; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+    }
   </style>
 </head>
 <body>
@@ -154,7 +195,7 @@
     <h1 id="title">Quiz</h1>
     <div class="sub" id="subtitle">Multiple choice quiz</div>
     <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
-    <div id="stage"><!-- question or results rendered here --></div>
+    <div class="stage" id="stage"></div>
   </main>
 
   <script src="questions.js"></script>
@@ -164,7 +205,12 @@
       var questions = data.questions || [];
       var current = 0;
       var score = 0;
-      var answered = false;
+      var locked = false; // prevents double taps / taps mid-transition
+
+      // Timings (ms)
+      var REVEAL = 750;     // how long the correct/wrong colors show
+      var EXIT = 300;       // slide-out duration (matches CSS)
+      var CELEBRATE = 900;  // end-screen burst before the score appears
 
       var titleEl = document.getElementById("title");
       var subtitleEl = document.getElementById("subtitle");
@@ -175,25 +221,26 @@
       subtitleEl.textContent = questions.length + " question" + (questions.length === 1 ? "" : "s");
 
       function setProgress(n) {
-        progress.style.width = (n / questions.length) * 100 + "%";
+        progress.style.width = (questions.length ? (n / questions.length) * 100 : 0) + "%";
       }
 
       function renderQuestion() {
-        answered = false;
+        locked = false;
         var q = questions[current];
         setProgress(current);
 
-        var wrap = document.createElement("div");
+        var card = document.createElement("div");
+        card.className = "qcard enter";
 
         var count = document.createElement("div");
         count.className = "qcount";
         count.textContent = "Question " + (current + 1) + " of " + questions.length;
-        wrap.appendChild(count);
+        card.appendChild(count);
 
         var qEl = document.createElement("div");
         qEl.className = "question";
         qEl.textContent = q.question;
-        wrap.appendChild(qEl);
+        card.appendChild(qEl);
 
         var opts = document.createElement("div");
         opts.className = "options";
@@ -205,91 +252,109 @@
 
           var marker = document.createElement("span");
           marker.className = "marker";
-          marker.textContent = letters[i] || i + 1;
+          marker.textContent = letters[i] || (i + 1);
           btn.appendChild(marker);
 
           var label = document.createElement("span");
           label.textContent = text;
           btn.appendChild(label);
 
-          btn.addEventListener("click", function () { choose(i, q, opts); });
+          btn.addEventListener("click", function () { choose(i, q, card, opts); });
           opts.appendChild(btn);
         });
-        wrap.appendChild(opts);
-
-        var exp = document.createElement("div");
-        exp.className = "explanation";
-        exp.id = "explanation";
-        wrap.appendChild(exp);
-
-        var footer = document.createElement("div");
-        footer.className = "footer";
-        var scoreEl = document.createElement("div");
-        scoreEl.className = "score";
-        scoreEl.textContent = "Score: " + score;
-        var next = document.createElement("button");
-        next.className = "primary";
-        next.id = "next";
-        next.textContent = current === questions.length - 1 ? "See results" : "Next";
-        next.disabled = true;
-        next.addEventListener("click", nextQuestion);
-        footer.appendChild(scoreEl);
-        footer.appendChild(next);
-        wrap.appendChild(footer);
+        card.appendChild(opts);
 
         stage.innerHTML = "";
-        stage.appendChild(wrap);
+        stage.appendChild(card);
       }
 
-      function choose(i, q, opts) {
-        if (answered) return;
-        answered = true;
+      function choose(i, q, card, opts) {
+        if (locked) return;
+        locked = true;
+
         var buttons = opts.querySelectorAll(".option");
         buttons.forEach(function (b, idx) {
           b.disabled = true;
           if (idx === q.answer) b.classList.add("correct");
-          if (idx === i && i !== q.answer) b.classList.add("wrong");
+          else if (idx === i) b.classList.add("wrong");
+          else b.classList.add("dim");
         });
+        buttons[i].classList.add("picked");
         if (i === q.answer) score++;
 
-        if (q.explanation) {
-          var exp = document.getElementById("explanation");
-          exp.innerHTML = "<strong>" + (i === q.answer ? "Correct. " : "Not quite. ") + "</strong>";
-          exp.appendChild(document.createTextNode(q.explanation));
-          exp.classList.add("show");
-        }
-        document.getElementById("next").disabled = false;
-      }
-
-      function nextQuestion() {
-        current++;
-        if (current < questions.length) renderQuestion();
-        else renderResults();
+        // After the reveal, animate the card out, then move on.
+        setTimeout(function () {
+          card.classList.remove("enter");
+          card.classList.add("exit");
+          setTimeout(function () {
+            current++;
+            if (current < questions.length) renderQuestion();
+            else renderResults();
+          }, EXIT);
+        }, REVEAL);
       }
 
       function renderResults() {
         setProgress(questions.length);
         var pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
+        var emoji = pct === 100 ? "🏆" : pct >= 70 ? "🎉" : pct >= 40 ? "👍" : "💪";
         var msg =
-          pct === 100 ? "Perfect score! 🎉" :
-          pct >= 70 ? "Nicely done." :
-          pct >= 40 ? "Not bad — try again?" :
-          "Room to improve — give it another go.";
+          pct === 100 ? "Perfect score!" :
+          pct >= 70 ? "Great job." :
+          pct >= 40 ? "Not bad!" :
+          "Give it another go.";
 
         stage.innerHTML = "";
         var r = document.createElement("div");
         r.className = "results";
-        r.innerHTML =
-          '<div class="big">' + score + " / " + questions.length + "</div>" +
-          "<p>" + pct + "% — " + msg + "</p>";
-        var again = document.createElement("button");
-        again.className = "primary";
-        again.textContent = "Restart quiz";
-        again.addEventListener("click", function () {
-          current = 0; score = 0; renderQuestion();
-        });
-        r.appendChild(again);
+
+        var burst = document.createElement("div");
+        burst.className = "celebrate";
+        burst.textContent = emoji;
+        r.appendChild(burst);
+
+        // Score + rest appear after the celebration animation.
+        setTimeout(function () {
+          var big = document.createElement("div");
+          big.className = "big";
+          big.textContent = score + " / " + questions.length;
+
+          var pctEl = document.createElement("p");
+          pctEl.className = "pct";
+          pctEl.textContent = pct + "%";
+
+          var msgEl = document.createElement("p");
+          msgEl.className = "msg";
+          msgEl.textContent = msg;
+
+          var again = document.createElement("button");
+          again.className = "primary";
+          again.textContent = "Play again";
+          again.addEventListener("click", function () {
+            current = 0; score = 0; renderQuestion();
+          });
+
+          r.appendChild(big);
+          r.appendChild(pctEl);
+          r.appendChild(msgEl);
+          r.appendChild(again);
+
+          // Count the score up for a little flair.
+          animateCount(big, score, questions.length);
+        }, CELEBRATE);
+
         stage.appendChild(r);
+      }
+
+      function animateCount(el, finalScore, total) {
+        if (finalScore <= 0) return;
+        var n = 0;
+        var step = Math.max(220 / finalScore, 60);
+        var timer = setInterval(function () {
+          n++;
+          el.textContent = n + " / " + total;
+          if (n >= finalScore) clearInterval(timer);
+        }, step);
       }
 
       if (questions.length) renderQuestion();
