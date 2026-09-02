@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -231,7 +231,7 @@
 <body>
   <main class="app">
     <h1 id="title">Quiz</h1>
-    <div class="sub" id="subtitle">Multiple choice quiz</div>
+    <div class="sub" id="subtitle">Multiple choice-quiz</div>
     <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
     <div class="stage" id="stage"></div>
   </main>
@@ -258,7 +258,7 @@
       var progress = document.getElementById("progress");
 
       titleEl.textContent = data.title || "Quiz";
-      subtitleEl.textContent = questions.length + " question" + (questions.length === 1 ? "" : "s");
+      subtitleEl.textContent = questions.length + " spørgsmål";
 
       function setProgress(n) {
         progress.style.width = (questions.length ? (n / questions.length) * 100 : 0) + "%";
@@ -274,7 +274,7 @@
 
         var count = document.createElement("div");
         count.className = "qcount";
-        count.textContent = "Question " + (current + 1) + " of " + questions.length;
+        count.textContent = "Spørgsmål " + (current + 1) + " af " + questions.length;
         card.appendChild(count);
 
         var qEl = document.createElement("div");
@@ -339,10 +339,10 @@
         var pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
         var emoji = pct === 100 ? "🏆" : pct >= 70 ? "🎉" : pct >= 40 ? "👍" : "💪";
         var msg =
-          pct === 100 ? "Perfect score!" :
-          pct >= 70 ? "Great job." :
-          pct >= 40 ? "Not bad!" :
-          "Give it another go.";
+          pct === 100 ? "Perfekt score!" :
+          pct >= 70 ? "Flot klaret!" :
+          pct >= 40 ? "Ikke dårligt!" :
+          "Prøv igen!";
 
         stage.innerHTML = "";
         var r = document.createElement("div");
@@ -385,7 +385,7 @@
         var review = document.createElement("div");
         review.className = "review";
         var heading = document.createElement("h2");
-        heading.textContent = "Correct answers";
+        heading.textContent = "Rigtige svar";
         review.appendChild(heading);
         container.appendChild(review);
 
@@ -407,7 +407,7 @@
             if (!isCorrect) {
               item.appendChild(answerLine("wrong", "✗",
                 (picked == null
-                  ? "No answer"
+                  ? "Intet svar"
                   : (letters[picked] || (picked + 1)) + ". " + q.options[picked])));
             }
 
@@ -432,7 +432,7 @@
         setTimeout(function () {
           var again = document.createElement("button");
           again.className = "primary";
-          again.textContent = "Play again";
+          again.textContent = "Spil igen";
           again.addEventListener("click", function () {
             current = 0; score = 0; picks = []; renderQuestion();
           });
@@ -466,7 +466,7 @@
       }
 
       if (questions.length) renderQuestion();
-      else stage.textContent = "No questions found. Edit questions.js to add some.";
+      else stage.textContent = "Ingen spørgsmål fundet. Rediger questions.js for at tilføje nogle.";
     })();
   </script>
 </body>
