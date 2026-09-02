@@ -3,10 +3,11 @@
 A small, dependency-free HTML quiz app. All logic runs in the browser, so it
 works perfectly on **GitHub Pages** (which is static-only — no server-side code).
 
-One question is shown at a time. The player taps an option, the correct/chosen
-answers flash briefly, then the card slides out and the next question slides in
-— no "Next" button. At the end a short celebration animation plays and the
-final score counts up.
+One question is shown at a time. The player taps an option — the choice is
+acknowledged but **the correct answer is not revealed** — then the card slides
+out and the next question slides in (no "Next" button). At the end a short
+celebration animation plays, the final score counts up, and then every question
+with its correct answer is revealed one by one, a second apart.
 
 Because everything runs on each device independently, any number of people can
 take the quiz at the same time from their own phones — there is no shared state

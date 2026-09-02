@@ -132,10 +132,9 @@
       color: var(--muted);
       transition: all 0.15s;
     }
-    .option.correct { border-color: var(--correct); background: var(--correct-soft); }
-    .option.correct .marker { border-color: var(--correct); color: #fff; background: var(--correct); }
-    .option.wrong { border-color: var(--wrong); background: var(--wrong-soft); }
-    .option.wrong .marker { border-color: var(--wrong); color: #fff; background: var(--wrong); }
+    /* Neutral acknowledgement only — correctness is NOT revealed here. */
+    .option.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .option.selected .marker { border-color: var(--accent); color: #fff; background: var(--accent); }
     .option.picked { animation: pop 0.28s ease; }
     .option.dim { opacity: 0.5; }
     @keyframes pop {
@@ -169,6 +168,34 @@
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    /* End-of-quiz review: questions + correct answers, revealed one by one */
+    .review { margin-top: 26px; text-align: left; }
+    .review h2 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+    .review-item {
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      margin-bottom: 10px;
+      background: var(--card);
+      animation: riseIn 0.4s ease both;
+    }
+    .review-item .rq { font-weight: 600; margin-bottom: 4px; }
+    .review-item .ra {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      color: var(--correct);
+      font-size: 0.98rem;
+    }
+    .review-item .ra .tick { flex: 0 0 auto; font-weight: 700; }
+
     button.primary {
       padding: 13px 26px;
       border: none;
@@ -208,9 +235,10 @@
       var locked = false; // prevents double taps / taps mid-transition
 
       // Timings (ms)
-      var REVEAL = 750;     // how long the correct/wrong colors show
+      var REVEAL = 450;     // brief pause after a tap before advancing
       var EXIT = 300;       // slide-out duration (matches CSS)
       var CELEBRATE = 900;  // end-screen burst before the score appears
+      var REVIEW_STEP = 1000; // gap between each revealed review item
 
       var titleEl = document.getElementById("title");
       var subtitleEl = document.getElementById("subtitle");
@@ -272,14 +300,13 @@
         if (locked) return;
         locked = true;
 
+        // Acknowledge the choice only — do NOT reveal whether it was right.
         var buttons = opts.querySelectorAll(".option");
         buttons.forEach(function (b, idx) {
           b.disabled = true;
-          if (idx === q.answer) b.classList.add("correct");
-          else if (idx === i) b.classList.add("wrong");
+          if (idx === i) b.classList.add("selected", "picked");
           else b.classList.add("dim");
         });
-        buttons[i].classList.add("picked");
         if (i === q.answer) score++;
 
         // After the reveal, animate the card out, then move on.
@@ -327,23 +354,66 @@
           msgEl.className = "msg";
           msgEl.textContent = msg;
 
+          r.appendChild(big);
+          r.appendChild(pctEl);
+          r.appendChild(msgEl);
+
+          // Count the score up for a little flair.
+          animateCount(big, score, questions.length);
+
+          // Then reveal the correct answers one by one.
+          revealAnswers(r);
+        }, CELEBRATE);
+
+        stage.appendChild(r);
+      }
+
+      function revealAnswers(container) {
+        var review = document.createElement("div");
+        review.className = "review";
+        var heading = document.createElement("h2");
+        heading.textContent = "Correct answers";
+        review.appendChild(heading);
+        container.appendChild(review);
+
+        var letters = "ABCDEFGHIJ";
+        questions.forEach(function (q, idx) {
+          setTimeout(function () {
+            var item = document.createElement("div");
+            item.className = "review-item";
+
+            var rq = document.createElement("div");
+            rq.className = "rq";
+            rq.textContent = (idx + 1) + ". " + q.question;
+            item.appendChild(rq);
+
+            var ra = document.createElement("div");
+            ra.className = "ra";
+            var tick = document.createElement("span");
+            tick.className = "tick";
+            tick.textContent = "✓";
+            var atext = document.createElement("span");
+            atext.textContent = (letters[q.answer] || (q.answer + 1)) + ". " + q.options[q.answer];
+            ra.appendChild(tick);
+            ra.appendChild(atext);
+            item.appendChild(ra);
+
+            review.appendChild(item);
+            item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, REVIEW_STEP * (idx + 1));
+        });
+
+        // "Play again" appears after the last answer has been revealed.
+        setTimeout(function () {
           var again = document.createElement("button");
           again.className = "primary";
           again.textContent = "Play again";
           again.addEventListener("click", function () {
             current = 0; score = 0; renderQuestion();
           });
-
-          r.appendChild(big);
-          r.appendChild(pctEl);
-          r.appendChild(msgEl);
-          r.appendChild(again);
-
-          // Count the score up for a little flair.
-          animateCount(big, score, questions.length);
-        }, CELEBRATE);
-
-        stage.appendChild(r);
+          container.appendChild(again);
+          again.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, REVIEW_STEP * (questions.length + 1));
       }
 
       function animateCount(el, finalScore, total) {
