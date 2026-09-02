@@ -10,45 +10,83 @@
  *                             // end-of-quiz review
  *   }
  *
- * You can have any number of questions and any number of options per question.
+ * Questions and options are shown in the order listed below — nothing is
+ * randomized. You can have any number of questions and options per question.
  */
 window.QUIZ = {
-  title: "Sample Quiz",
+  title: "Skotland-quiz",
   questions: [
     {
-      question: "Can GitHub Pages run server-side code?",
-      options: [
-        "Yes, it runs Node.js",
-        "Yes, but only PHP",
-        "No, it only serves static files",
-        "Only on paid plans",
-      ],
-      answer: 2,
-      explanation:
-        "GitHub Pages is static hosting only. It serves HTML/CSS/JS to the browser — there is no server runtime. Dynamic behaviour must run client-side in JavaScript.",
+      question: "Hvilket universitet er Skotlands ældste?",
+      options: ["University of Glasgow", "University of Edinburgh", "University of Aberdeen", "University of St Andrews"],
+      answer: 3,
+      explanation: "University of St Andrews blev grundlagt i 1413 og er det ældste i Skotland og det tredjeældste i den engelsktalende verden.",
     },
     {
-      question: "Which language runs quiz logic in a static web app?",
-      options: ["Python", "JavaScript", "Ruby", "Go"],
+      question: "Hvad hedder Skotlands højeste bjerg?",
+      options: ["Cairn Gorm", "Ben Nevis", "Ben Macdui", "Schiehallion"],
       answer: 1,
-      explanation:
-        "In a browser-only app, JavaScript handles all the interactivity.",
+      explanation: "Ben Nevis er 1.345 meter højt og ligger nær Fort William.",
     },
     {
-      question: "What does HTML stand for?",
-      options: [
-        "HyperText Markup Language",
-        "HighText Machine Language",
-        "Hyperlink Text Markup Logic",
-        "Home Tool Markup Language",
-      ],
-      answer: 0,
+      question: "Hvilket dyr er Skotlands officielle nationaldyr?",
+      options: ["Kronhjorten", "Kongeørnen", "Enhjørningen", "Løven"],
+      answer: 2,
+      explanation: "Enhjørningen har været Skotlands heraldiske nationaldyr siden 1300-tallet.",
     },
     {
-      question: "Which of these is a valid CSS unit?",
-      options: ["px", "kg", "sec-of-arc", "watts"],
+      question: "Hvad er Skotlands mest kendte nationalret?",
+      options: ["Black pudding", "Cullen skink", "Fish and chips", "Haggis"],
+      answer: 3,
+      explanation: "Haggis laves traditionelt af fårets indmad krydret og kogt i en mave — og fejres især til Burns Night.",
+    },
+    {
+      question: "Verdens korteste ruteflyvning findes i Skotland (mellem to øer i Orkney). Hvor lang tid tager den typisk?",
+      options: ["Ca. 90 sekunder", "Ca. 10 minutter", "Ca. 25 minutter", "Ca. 45 minutter"],
       answer: 0,
-      explanation: "px (pixels) is a length unit in CSS.",
+      explanation: "Flyvningen mellem Westray og Papa Westray tager omkring halvandet minut — kortere med medvind.",
+    },
+    {
+      question: "Hvad kaldes det skotske flag med det hvide skråkors på blå bund?",
+      options: ["Union Jack", "The Dragon", "The Saltire", "The Red Hand"],
+      answer: 2,
+      explanation: "The Saltire (Skt. Andreas-korset) regnes for et af verdens ældste nationalflag stadig i brug.",
+    },
+    {
+      question: "Hvilken orange sodavand er så populær, at den ofte kaldes Skotlands \"anden nationaldrik\" (efter whisky)?",
+      options: ["Tizer", "Vimto", "Lucozade", "Irn-Bru"],
+      answer: 3,
+      explanation: "Irn-Bru er et af de få lande-sodavand i verden, der har solgt mere end Coca-Cola på hjemmemarkedet.",
+    },
+    {
+      question: "Hvilken kaloriebombe opstod angiveligt i en skotsk fish and chips-butik?",
+      options: ["Friteret Mars-bar", "Friteret Snickers", "Friteret Twix", "Friteret Bounty"],
+      answer: 0,
+      explanation: "Den friterede Mars-bar dukkede op i 1990'erne i en butik i Aberdeenshire og blev et skotsk kultfænomen.",
+    },
+    {
+      question: "Hvilken sø er Skotlands største målt på overfladeareal?",
+      options: ["Loch Ness", "Loch Morar", "Loch Awe", "Loch Lomond"],
+      answer: 3,
+      explanation: "Loch Lomond er størst på areal. Loch Ness rummer dog mest vand, og Loch Morar er dybest.",
+    },
+    {
+      question: "Hvilken by regnes som golfsportens vugge og har en verdensberømt bane?",
+      options: ["Perth", "St Andrews", "Falkirk", "Ayr"],
+      answer: 1,
+      explanation: "The Old Course i St Andrews har været spillet siden 1400-tallet og kaldes golfsportens hjem.",
+    },
+    {
+      question: "Det ternede stof, der bl.a. bruges til kilts, kaldes?",
+      options: ["Tartan", "Tweed", "Paisley", "Argyle"],
+      answer: 0,
+      explanation: "Tartan er det ternede mønster; hver klan har traditionelt sit eget.",
+    },
+    {
+      question: "Hvilken skotskfødte skuespiller var den første, der spillede James Bond på film?",
+      options: ["Roger Moore", "Michael Caine", "Sean Connery", "David Niven"],
+      answer: 2,
+      explanation: "Sean Connery fra Edinburgh spillede Bond første gang i Dr. No (1962).",
     },
   ],
 };
