@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Quiz</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1c2230;
+      --muted: #5a6478;
+      --border: #e2e6ef;
+      --accent: #4f46e5;
+      --accent-soft: #eef0fe;
+      --correct: #16a34a;
+      --correct-soft: #e7f6ed;
+      --wrong: #dc2626;
+      --wrong-soft: #fdeaea;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(20, 26, 45, 0.08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #10141c;
+        --card: #1a2029;
+        --text: #eef1f6;
+        --muted: #9aa4b8;
+        --border: #2a323f;
+        --accent: #7c74ff;
+        --accent-soft: #232544;
+        --correct: #38d178;
+        --correct-soft: #17301f;
+        --wrong: #f4707a;
+        --wrong-soft: #331a1d;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+    .app {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 26px 22px 30px;
+      overflow: hidden;
+    }
+    h1 { margin: 0 0 4px; font-size: 1.35rem; }
+    .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+
+    .progress-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    /* Stage holds the animating card */
+    .stage { position: relative; }
+
+    .qcard { will-change: transform, opacity; }
+    .qcard.enter { animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .qcard.exit  { animation: slideOut 0.3s cubic-bezier(0.55, 0, 0.68, 0.2) both; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(36px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to   { opacity: 0; transform: translateX(-40px); }
+    }
+
+    .qcount { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
+    .question { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; min-height: 2.4em; }
+
+    .options { display: flex; flex-direction: column; gap: 12px; }
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      text-align: left;
+      padding: 16px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.08s;
+      touch-action: manipulation;
+    }
+    .option:active:not(:disabled) { transform: scale(0.98); border-color: var(--accent); background: var(--accent-soft); }
+    @media (hover: hover) {
+      .option:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+    }
+    .option:disabled { cursor: default; }
+    .option .marker {
+      flex: 0 0 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    /* Neutral acknowledgement only — correctness is NOT revealed here. */
+    .option.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .option.selected .marker { border-color: var(--accent); color: #fff; background: var(--accent); }
+    .option.picked { animation: pop 0.28s ease; }
+    .option.dim { opacity: 0.5; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    /* Results screen */
+    .results { text-align: center; padding: 12px 0 4px; }
+    .celebrate {
+      font-size: 3.4rem;
+      margin: 6px 0 4px;
+      animation: burst 0.7s cubic-bezier(0.18, 1.4, 0.4, 1) both;
+    }
+    @keyframes burst {
+      0% { transform: scale(0.2) rotate(-20deg); opacity: 0; }
+      60% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .results .big {
+      font-size: 3.2rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 8px 0 2px;
+      animation: riseIn 0.5s ease 0.15s both;
+    }
+    .results .pct { color: var(--muted); font-size: 1.05rem; margin: 0 0 6px; animation: riseIn 0.5s ease 0.25s both; }
+    .results .msg { color: var(--text); font-size: 1.05rem; margin: 0 0 22px; animation: riseIn 0.5s ease 0.35s both; }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    /* End-of-quiz review: questions + correct answers, revealed one by one */
+    .review { margin-top: 26px; text-align: left; }
+    .review h2 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+    .review-item {
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+      border-radius: 11px;
+      margin-bottom: 10px;
+      background: var(--card);
+      animation: riseIn 0.4s ease both;
+    }
+    .review-item.correct { border-left-color: var(--correct); background: var(--correct-soft); }
+    .review-item.incorrect { border-left-color: var(--wrong); background: var(--wrong-soft); }
+    .review-item .rq { font-weight: 600; margin-bottom: 6px; }
+    .review-item .ra {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      font-size: 0.98rem;
+      margin-top: 3px;
+    }
+    .review-item .ra .tick { flex: 0 0 auto; font-weight: 700; }
+    .review-item .ra.right { color: var(--correct); }
+    .review-item .ra.wrong { color: var(--wrong); }
+    .review-item .rexp {
+      margin-top: 7px;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    button.primary {
+      padding: 13px 26px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.02rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.08s;
+      animation: riseIn 0.5s ease 0.5s both;
+      touch-action: manipulation;
+    }
+    button.primary:active { transform: scale(0.97); }
+    button.primary:hover { opacity: 0.9; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1 id="title">Quiz</h1>
+    <div class="sub" id="subtitle">Multiple choice-quiz</div>
+    <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
+    <div class="stage" id="stage"></div>
+  </main>
+
+  <script src="questions.js"></script>
+  <script>
+    (function () {
+      var data = window.QUIZ || { title: "Quiz", questions: [] };
+      var questions = data.questions || [];
+      var current = 0;
+      var score = 0;
+      var picks = [];     // the option index each question was answered with
+      var locked = false; // prevents double taps / taps mid-transition
+
+      // Timings (ms)
+      var REVEAL = 450;     // brief pause after a tap before advancing
+      var EXIT = 300;       // slide-out duration (matches CSS)
+      var CELEBRATE = 900;  // end-screen burst before the score appears
+      var REVIEW_STEP = 1000; // gap between each revealed review item
+
+      var titleEl = document.getElementById("title");
+      var subtitleEl = document.getElementById("subtitle");
+      var stage = document.getElementById("stage");
+      var progress = document.getElementById("progress");
+
+      titleEl.textContent = data.title || "Quiz";
+      subtitleEl.textContent = questions.length + " spørgsmål";
+
+      function setProgress(n) {
+        progress.style.width = (questions.length ? (n / questions.length) * 100 : 0) + "%";
+      }
+
+      function renderQuestion() {
+        locked = false;
+        var q = questions[current];
+        setProgress(current);
+
+        var card = document.createElement("div");
+        card.className = "qcard enter";
+
+        var count = document.createElement("div");
+        count.className = "qcount";
+        count.textContent = "Spørgsmål " + (current + 1) + " af " + questions.length;
+        card.appendChild(count);
+
+        var qEl = document.createElement("div");
+        qEl.className = "question";
+        qEl.textContent = q.question;
+        card.appendChild(qEl);
+
+        var opts = document.createElement("div");
+        opts.className = "options";
+        var letters = "ABCDEFGHIJ";
+        q.options.forEach(function (text, i) {
+          var btn = document.createElement("button");
+          btn.className = "option";
+          btn.type = "button";
+
+          var marker = document.createElement("span");
+          marker.className = "marker";
+          marker.textContent = letters[i] || (i + 1);
+          btn.appendChild(marker);
+
+          var label = document.createElement("span");
+          label.textContent = text;
+          btn.appendChild(label);
+
+          btn.addEventListener("click", function () { choose(i, q, card, opts); });
+          opts.appendChild(btn);
+        });
+        card.appendChild(opts);
+
+        stage.innerHTML = "";
+        stage.appendChild(card);
+      }
+
+      function choose(i, q, card, opts) {
+        if (locked) return;
+        locked = true;
+
+        // Acknowledge the choice only — do NOT reveal whether it was right.
+        var buttons = opts.querySelectorAll(".option");
+        buttons.forEach(function (b, idx) {
+          b.disabled = true;
+          if (idx === i) b.classList.add("selected", "picked");
+          else b.classList.add("dim");
+        });
+        picks[current] = i;
+        if (i === q.answer) score++;
+
+        // After the reveal, animate the card out, then move on.
+        setTimeout(function () {
+          card.classList.remove("enter");
+          card.classList.add("exit");
+          setTimeout(function () {
+            current++;
+            if (current < questions.length) renderQuestion();
+            else renderResults();
+          }, EXIT);
+        }, REVEAL);
+      }
+
+      function renderResults() {
+        setProgress(questions.length);
+        var pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
+        var emoji = pct === 100 ? "🏆" : pct >= 70 ? "🎉" : pct >= 40 ? "👍" : "💪";
+        var msg =
+          pct === 100 ? "Perfekt score!" :
+          pct >= 70 ? "Flot klaret!" :
+          pct >= 40 ? "Ikke dårligt!" :
+          "Prøv igen!";
+
+        stage.innerHTML = "";
+        var r = document.createElement("div");
+        r.className = "results";
+
+        var burst = document.createElement("div");
+        burst.className = "celebrate";
+        burst.textContent = emoji;
+        r.appendChild(burst);
+
+        // Score + rest appear after the celebration animation.
+        setTimeout(function () {
+          var big = document.createElement("div");
+          big.className = "big";
+          big.textContent = score + " / " + questions.length;
+
+          var pctEl = document.createElement("p");
+          pctEl.className = "pct";
+          pctEl.textContent = pct + "%";
+
+          var msgEl = document.createElement("p");
+          msgEl.className = "msg";
+          msgEl.textContent = msg;
+
+          r.appendChild(big);
+          r.appendChild(pctEl);
+          r.appendChild(msgEl);
+
+          // Count the score up for a little flair.
+          animateCount(big, score, questions.length);
+
+          // Then reveal the correct answers one by one.
+          revealAnswers(r);
+        }, CELEBRATE);
+
+        stage.appendChild(r);
+      }
+
+      function revealAnswers(container) {
+        var review = document.createElement("div");
+        review.className = "review";
+        var heading = document.createElement("h2");
+        heading.textContent = "Rigtige svar";
+        review.appendChild(heading);
+        container.appendChild(review);
+
+        var letters = "ABCDEFGHIJ";
+        questions.forEach(function (q, idx) {
+          setTimeout(function () {
+            var picked = picks[idx];
+            var isCorrect = picked === q.answer;
+
+            var item = document.createElement("div");
+            item.className = "review-item " + (isCorrect ? "correct" : "incorrect");
+
+            var rq = document.createElement("div");
+            rq.className = "rq";
+            rq.textContent = (idx + 1) + ". " + q.question;
+            item.appendChild(rq);
+
+            // If they got it wrong, show their answer in red first.
+            if (!isCorrect) {
+              item.appendChild(answerLine("wrong", "✗",
+                (picked == null
+                  ? "Intet svar"
+                  : (letters[picked] || (picked + 1)) + ". " + q.options[picked])));
+            }
+
+            // Always show the correct answer in green.
+            item.appendChild(answerLine("right", "✓",
+              (letters[q.answer] || (q.answer + 1)) + ". " + q.options[q.answer]));
+
+            // Optional explanation in very small text.
+            if (q.explanation) {
+              var exp = document.createElement("div");
+              exp.className = "rexp";
+              exp.textContent = q.explanation;
+              item.appendChild(exp);
+            }
+
+            review.appendChild(item);
+            item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, REVIEW_STEP * (idx + 1));
+        });
+
+        // "Play again" appears after the last answer has been revealed.
+        setTimeout(function () {
+          var again = document.createElement("button");
+          again.className = "primary";
+          again.textContent = "Spil igen";
+          again.addEventListener("click", function () {
+            current = 0; score = 0; picks = []; renderQuestion();
+          });
+          container.appendChild(again);
+          again.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, REVIEW_STEP * (questions.length + 1));
+      }
+
+      function answerLine(kind, symbol, text) {
+        var ra = document.createElement("div");
+        ra.className = "ra " + kind;
+        var tick = document.createElement("span");
+        tick.className = "tick";
+        tick.textContent = symbol;
+        var atext = document.createElement("span");
+        atext.textContent = text;
+        ra.appendChild(tick);
+        ra.appendChild(atext);
+        return ra;
+      }
+
+      function animateCount(el, finalScore, total) {
+        if (finalScore <= 0) return;
+        var n = 0;
+        var step = Math.max(220 / finalScore, 60);
+        var timer = setInterval(function () {
+          n++;
+          el.textContent = n + " / " + total;
+          if (n >= finalScore) clearInterval(timer);
+        }, step);
+      }
+
+      if (questions.length) renderQuestion();
+      else stage.textContent = "Ingen spørgsmål fundet. Rediger questions.js for at tilføje nogle.";
+    })();
+  </script>
+</body>
+</html>
