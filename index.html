@@ -336,7 +336,7 @@
       var timerBar = document.getElementById("timer-bar");
 
       titleEl.textContent = data.title || "Quiz";
-      subtitleEl.textContent = questions.length + " spørgsmål";
+      subtitleEl.textContent = data.subtitle || (questions.length + " spørgsmål");
 
       function setProgress(n) {
         progress.style.width = (questions.length ? (n / questions.length) * 100 : 0) + "%";
@@ -624,7 +624,7 @@
 
         var meta = document.createElement("p");
         meta.className = "start-meta";
-        meta.textContent = questions.length + " spørgsmål · ingen tidsgrænse";
+        meta.textContent = questions.length + " spørgsmål";
 
         var btn = document.createElement("button");
         btn.className = "primary";
