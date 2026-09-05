@@ -81,19 +81,35 @@
       transition: width 0.35s ease;
     }
 
+    /* Per-question countdown bar — retracts from full width to nothing.
+       Its width is driven from JS (a linear width transition over the limit). */
+    .timer-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .timer-bar {
+      height: 100%;
+      width: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #22c55e);
+    }
+
     /* Stage holds the animating card */
     .stage { position: relative; }
 
     .qcard { will-change: transform, opacity; }
-    .qcard.enter { animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
-    .qcard.exit  { animation: slideOut 0.3s cubic-bezier(0.55, 0, 0.68, 0.2) both; }
+    .qcard.enter { animation: slideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .qcard.exit  { animation: slideOut 0.5s cubic-bezier(0.55, 0, 0.68, 0.2) both; }
     @keyframes slideIn {
-      from { opacity: 0; transform: translateX(36px); }
+      from { opacity: 0; transform: translateX(64px); }
       to   { opacity: 1; transform: translateX(0); }
     }
     @keyframes slideOut {
       from { opacity: 1; transform: translateX(0); }
-      to   { opacity: 0; transform: translateX(-40px); }
+      to   { opacity: 0; transform: translateX(-64px); }
     }
 
     .qcount { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
@@ -159,14 +175,40 @@
       box-shadow: 0 10px 12px -10px rgba(20, 26, 45, 0.28);
     }
     .celebrate {
-      font-size: 3.4rem;
+      font-size: 4.2rem;
       margin: 6px 0 4px;
-      animation: burst 0.7s cubic-bezier(0.18, 1.4, 0.4, 1) both;
+      animation: burst 0.8s cubic-bezier(0.18, 1.5, 0.4, 1) both;
     }
     @keyframes burst {
       0% { transform: scale(0.2) rotate(-20deg); opacity: 0; }
-      60% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+      55% { transform: scale(1.35) rotate(10deg); opacity: 1; }
+      75% { transform: scale(0.92) rotate(-4deg); }
       100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    /* Confetti celebration — a fixed overlay of falling pieces spawned from JS. */
+    .confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 50;
+    }
+    .confetti-piece {
+      position: absolute;
+      top: -12vh;
+      width: 9px;
+      height: 15px;
+      border-radius: 2px;
+      opacity: 0.95;
+      animation-name: confetti-fall;
+      animation-timing-function: cubic-bezier(0.35, 0.1, 0.7, 1);
+      animation-fill-mode: forwards;
+      animation-iteration-count: 1;
+    }
+    @keyframes confetti-fall {
+      0%   { transform: translate(0, -12vh) rotate(0); opacity: 1; }
+      100% { transform: translate(var(--x, 0), 115vh) rotate(var(--r, 540deg)); opacity: 0.9; }
     }
     .results .big {
       font-size: 3.2rem;
@@ -258,6 +300,7 @@
 </head>
 <body>
   <main class="app">
+    <div class="timer-track" id="timer-track" hidden><div class="timer-bar" id="timer-bar"></div></div>
     <h1 id="title">Quiz</h1>
     <div class="sub" id="subtitle">Multiple choice-quiz</div>
     <div class="progress-track" id="progress-track" hidden><div class="progress-bar" id="progress"></div></div>
@@ -273,11 +316,15 @@
       var score = 0;
       var picks = [];     // the option index each question was answered with
       var locked = false; // prevents double taps / taps mid-transition
+      var questionTimer = null; // pending start-delay or countdown timeout
+      var currentCard = null;   // the question card currently on screen
 
       // Timings (ms)
-      var REVEAL = 450;     // brief pause after a tap before advancing
-      var EXIT = 300;       // slide-out duration (matches CSS)
-      var CELEBRATE = 900;  // end-screen burst before the score appears
+      var REVEAL = 450;      // brief pause after a tap before advancing
+      var EXIT = 500;        // slide-out duration (matches CSS)
+      var ENTER = 600;       // slide-in duration (matches CSS); timer waits for it
+      var TIME_LIMIT = 20000; // per-question countdown
+      var CELEBRATE = 900;   // end-screen burst before the score appears
       var REVIEW_STEP = 2000; // gap between each revealed review item
 
       var titleEl = document.getElementById("title");
@@ -285,6 +332,8 @@
       var stage = document.getElementById("stage");
       var progress = document.getElementById("progress");
       var progressTrack = document.getElementById("progress-track");
+      var timerTrack = document.getElementById("timer-track");
+      var timerBar = document.getElementById("timer-bar");
 
       titleEl.textContent = data.title || "Quiz";
       subtitleEl.textContent = questions.length + " spørgsmål";
@@ -335,11 +384,56 @@
 
         stage.innerHTML = "";
         stage.appendChild(card);
+        currentCard = card;
+
+        // Hold the timer bar full and visible during the entry animation, then
+        // start the countdown once the animation has finished.
+        timerTrack.hidden = false;
+        timerBar.style.transition = "none";
+        timerBar.style.width = "100%";
+        questionTimer = setTimeout(startTimer, ENTER);
+      }
+
+      function startTimer() {
+        // Animate the bar from full to empty over the time limit.
+        timerBar.style.transition = "none";
+        timerBar.style.width = "100%";
+        void timerBar.offsetWidth; // force reflow so the next change animates
+        timerBar.style.transition = "width " + TIME_LIMIT + "ms linear";
+        timerBar.style.width = "0%";
+        questionTimer = setTimeout(handleTimeout, TIME_LIMIT);
+      }
+
+      function stopTimer() {
+        if (questionTimer) { clearTimeout(questionTimer); questionTimer = null; }
+        // Freeze the bar where it is so it stops shrinking during the reveal.
+        var w = getComputedStyle(timerBar).width;
+        timerBar.style.transition = "none";
+        timerBar.style.width = w;
+      }
+
+      function goNext() {
+        currentCard.classList.remove("enter");
+        currentCard.classList.add("exit");
+        setTimeout(function () {
+          current++;
+          if (current < questions.length) renderQuestion();
+          else renderResults();
+        }, EXIT);
+      }
+
+      function handleTimeout() {
+        if (locked) return;
+        locked = true;
+        questionTimer = null;
+        // No answer recorded (picks[current] stays undefined -> counts as wrong).
+        goNext();
       }
 
       function choose(i, q, card, opts) {
         if (locked) return;
         locked = true;
+        stopTimer();
 
         // Acknowledge the choice only — do NOT reveal whether it was right.
         var buttons = opts.querySelectorAll(".option");
@@ -352,18 +446,12 @@
         if (i === q.answer) score++;
 
         // After the reveal, animate the card out, then move on.
-        setTimeout(function () {
-          card.classList.remove("enter");
-          card.classList.add("exit");
-          setTimeout(function () {
-            current++;
-            if (current < questions.length) renderQuestion();
-            else renderResults();
-          }, EXIT);
-        }, REVEAL);
+        setTimeout(goNext, REVEAL);
       }
 
       function renderResults() {
+        stopTimer();
+        timerTrack.hidden = true;
         setProgress(questions.length);
         var pct = questions.length ? Math.round((score / questions.length) * 100) : 0;
         var emoji = pct === 100 ? "🏆" : pct >= 70 ? "🎉" : pct >= 40 ? "👍" : "💪";
@@ -381,6 +469,10 @@
         burst.className = "celebrate";
         burst.textContent = emoji;
         r.appendChild(burst);
+
+        // Confetti when results appear, and a second burst as the score lands.
+        spawnConfetti();
+        setTimeout(spawnConfetti, CELEBRATE);
 
         // Score + rest appear after the celebration animation.
         setTimeout(function () {
@@ -486,6 +578,26 @@
         return ra;
       }
 
+      function spawnConfetti() {
+        var colors = ["#4f46e5", "#22c55e", "#f59e0b", "#ef4444", "#0ea5e9", "#db2777", "#a855f7"];
+        var layer = document.createElement("div");
+        layer.className = "confetti-layer";
+        for (var i = 0; i < 80; i++) {
+          var p = document.createElement("span");
+          p.className = "confetti-piece";
+          p.style.left = Math.random() * 100 + "%";
+          p.style.background = colors[i % colors.length];
+          p.style.setProperty("--x", (Math.random() * 180 - 90) + "px");
+          p.style.setProperty("--r", (Math.random() * 900 - 450) + "deg");
+          p.style.animationDelay = (Math.random() * 0.5) + "s";
+          p.style.animationDuration = (2.6 + Math.random() * 2) + "s";
+          if (Math.random() < 0.4) { p.style.width = "7px"; p.style.height = "7px"; p.style.borderRadius = "50%"; }
+          layer.appendChild(p);
+        }
+        document.body.appendChild(layer);
+        setTimeout(function () { layer.remove(); }, 6500);
+      }
+
       function animateCount(el, finalScore, total) {
         if (finalScore <= 0) return;
         var n = 0;
@@ -499,6 +611,7 @@
 
       function renderStart() {
         progressTrack.hidden = true;
+        timerTrack.hidden = true;
         stage.innerHTML = "";
 
         var s = document.createElement("div");
