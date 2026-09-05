@@ -14,7 +14,7 @@
  * randomized. You can have any number of questions and options per question.
  */
 window.QUIZ = {
-  title: "Shani's overlevelses quiz",
+  title: "Shani's overlevelsesquiz",
   subtitle: "Hvem får lov at vende hjem til Speranza?",
   questions: [
     {

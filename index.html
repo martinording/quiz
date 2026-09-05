@@ -323,7 +323,7 @@
       // Timings (ms)
       var EXIT = 500;        // slide-out duration (matches CSS)
       var ENTER = 600;       // slide-in duration (matches CSS); timer waits for it
-      var TIME_LIMIT = 15000; // per-question countdown — everyone advances together
+      var TIME_LIMIT = 14000; // per-question countdown — everyone advances together
       var CELEBRATE = 900;   // end-screen burst before the score appears
       var REVIEW_STEP = 1000; // gap between each revealed review item
 
@@ -618,10 +618,6 @@
         var s = document.createElement("div");
         s.className = "start";
 
-        var lead = document.createElement("p");
-        lead.className = "start-lead";
-        lead.textContent = "Test din viden om Skotland!";
-
         var meta = document.createElement("p");
         meta.className = "start-meta";
         meta.textContent = questions.length + " spørgsmål";
@@ -631,7 +627,6 @@
         btn.textContent = "Start quiz";
         btn.addEventListener("click", startQuiz);
 
-        s.appendChild(lead);
         s.appendChild(meta);
         s.appendChild(btn);
         stage.appendChild(s);
