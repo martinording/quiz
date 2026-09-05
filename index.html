@@ -314,18 +314,18 @@
       var questions = data.questions || [];
       var current = 0;
       var score = 0;
-      var picks = [];     // the option index each question was answered with
-      var locked = false; // prevents double taps / taps mid-transition
+      var picks = [];       // the option index each question was answered with
+      var answered = false; // whether the current question has been answered
+      var advancing = false;// guards the single, time-driven advance
       var questionTimer = null; // pending start-delay or countdown timeout
       var currentCard = null;   // the question card currently on screen
 
       // Timings (ms)
-      var REVEAL = 450;      // brief pause after a tap before advancing
       var EXIT = 500;        // slide-out duration (matches CSS)
       var ENTER = 600;       // slide-in duration (matches CSS); timer waits for it
-      var TIME_LIMIT = 20000; // per-question countdown
+      var TIME_LIMIT = 15000; // per-question countdown — everyone advances together
       var CELEBRATE = 900;   // end-screen burst before the score appears
-      var REVIEW_STEP = 2000; // gap between each revealed review item
+      var REVIEW_STEP = 1000; // gap between each revealed review item
 
       var titleEl = document.getElementById("title");
       var subtitleEl = document.getElementById("subtitle");
@@ -343,7 +343,8 @@
       }
 
       function renderQuestion() {
-        locked = false;
+        answered = false;
+        advancing = false;
         var q = questions[current];
         setProgress(current);
 
@@ -413,6 +414,8 @@
       }
 
       function goNext() {
+        if (advancing) return;
+        advancing = true;
         currentCard.classList.remove("enter");
         currentCard.classList.add("exit");
         setTimeout(function () {
@@ -423,19 +426,19 @@
       }
 
       function handleTimeout() {
-        if (locked) return;
-        locked = true;
         questionTimer = null;
-        // No answer recorded (picks[current] stays undefined -> counts as wrong).
+        // Time is up — advance whether or not the player answered. This is the
+        // only path that moves the quiz on, so everyone who started the
+        // question together advances together.
         goNext();
       }
 
       function choose(i, q, card, opts) {
-        if (locked) return;
-        locked = true;
-        stopTimer();
+        if (answered) return;
+        answered = true;
 
-        // Acknowledge the choice only — do NOT reveal whether it was right.
+        // Record the choice, but stay on the question until the timer runs out.
+        // Correctness is not revealed here.
         var buttons = opts.querySelectorAll(".option");
         buttons.forEach(function (b, idx) {
           b.disabled = true;
@@ -444,9 +447,7 @@
         });
         picks[current] = i;
         if (i === q.answer) score++;
-
-        // After the reveal, animate the card out, then move on.
-        setTimeout(goNext, REVEAL);
+        // No advance here — handleTimeout() moves on when the countdown ends.
       }
 
       function renderResults() {

@@ -8,12 +8,17 @@ A start screen is shown first; the quiz begins only when the player presses
 initial page load, so a player who loses connection after the page loads can
 still start and complete the quiz.
 
-One question is shown at a time, with a **20-second countdown** shown as a bar
+One question is shown at a time, with a **15-second countdown** shown as a bar
 that retracts from full width to nothing (the countdown starts once the
-question has finished sliding in). If time runs out the question counts as
-unanswered and the quiz moves on. The player taps an option — the choice is
-acknowledged but **the correct answer is not revealed** — then the card slides
-out and the next question slides in (no "Next" button). At the end a short
+question has finished sliding in). Tapping an option records the answer but
+**does not advance** — every player stays on the question until the timer runs
+out, so players who start together stay in sync. The chosen option is
+acknowledged but **the correct answer is not revealed**. When the timer ends,
+the card slides out and the next question slides in (no "Next" button); an
+unanswered question simply counts as wrong.
+
+At the end, after the score, each question and its correct answer are revealed
+one per second. At the end a short
 celebration animation plays, the final score counts up, and then every question
 is revealed one by one, a second apart — each tinted green if the player got it
 right or red if not, showing the correct answer (and their answer, if wrong)
