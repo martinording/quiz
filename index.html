@@ -220,6 +220,21 @@
       color: var(--muted);
     }
 
+    /* Start screen */
+    .start { text-align: center; padding: 24px 0 10px; }
+    .start-lead {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 6px 0 8px;
+      animation: riseIn 0.5s ease 0.05s both;
+    }
+    .start-meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0 0 24px;
+      animation: riseIn 0.5s ease 0.15s both;
+    }
+
     button.primary {
       padding: 13px 26px;
       border: none;
@@ -245,7 +260,7 @@
   <main class="app">
     <h1 id="title">Quiz</h1>
     <div class="sub" id="subtitle">Multiple choice-quiz</div>
-    <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
+    <div class="progress-track" id="progress-track" hidden><div class="progress-bar" id="progress"></div></div>
     <div class="stage" id="stage"></div>
   </main>
 
@@ -269,6 +284,7 @@
       var subtitleEl = document.getElementById("subtitle");
       var stage = document.getElementById("stage");
       var progress = document.getElementById("progress");
+      var progressTrack = document.getElementById("progress-track");
 
       titleEl.textContent = data.title || "Quiz";
       subtitleEl.textContent = questions.length + " spørgsmål";
@@ -481,7 +497,41 @@
         }, step);
       }
 
-      if (questions.length) renderQuestion();
+      function renderStart() {
+        progressTrack.hidden = true;
+        stage.innerHTML = "";
+
+        var s = document.createElement("div");
+        s.className = "start";
+
+        var lead = document.createElement("p");
+        lead.className = "start-lead";
+        lead.textContent = "Test din viden om Skotland!";
+
+        var meta = document.createElement("p");
+        meta.className = "start-meta";
+        meta.textContent = questions.length + " spørgsmål · ingen tidsgrænse";
+
+        var btn = document.createElement("button");
+        btn.className = "primary";
+        btn.textContent = "Start quiz";
+        btn.addEventListener("click", startQuiz);
+
+        s.appendChild(lead);
+        s.appendChild(meta);
+        s.appendChild(btn);
+        stage.appendChild(s);
+      }
+
+      function startQuiz() {
+        current = 0;
+        score = 0;
+        picks = [];
+        progressTrack.hidden = false;
+        renderQuestion();
+      }
+
+      if (questions.length) renderStart();
       else stage.textContent = "Ingen spørgsmål fundet. Rediger questions.js for at tilføje nogle.";
     })();
   </script>

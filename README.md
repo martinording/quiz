@@ -3,6 +3,11 @@
 A small, dependency-free HTML quiz app. All logic runs in the browser, so it
 works perfectly on **GitHub Pages** (which is static-only — no server-side code).
 
+A start screen is shown first; the quiz begins only when the player presses
+**Start quiz**. Everything (app, questions, start screen) is delivered in the
+initial page load, so a player who loses connection after the page loads can
+still start and complete the quiz.
+
 One question is shown at a time. The player taps an option — the choice is
 acknowledged but **the correct answer is not revealed** — then the card slides
 out and the next question slides in (no "Next" button). At the end a short
